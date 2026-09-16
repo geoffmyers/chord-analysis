@@ -8,18 +8,6 @@
 [![PRs welcome](https://img.shields.io/badge/PRs-welcome-brightgreen?style=flat-square)](CONTRIBUTING.md)
 <!-- BADGES:END -->
 
-## Description
-
-A Python tool for music producers with large sample libraries. It works out the
-chord progression, key and tempo of each sample, stores them in a database, and
-then answers the question a producer actually has: **which other samples will
-sound good with this one?**
-
-Two samples can be compatible even when they are in different keys, because a
-sample can be pitch-shifted, so matching is done on the *shape* of a progression
-as well as its exact chords. The tool has a command-line interface, a Streamlit
-web UI, and can also transcribe audio to MIDI.
-
 ## Table of Contents
 
 - [Description](#description)
@@ -43,6 +31,18 @@ web UI, and can also transcribe audio to MIDI.
 - [Credits](#credits)
 - [Contributing](#contributing)
 - [License](#license)
+
+## Description
+
+A Python tool for music producers with large sample libraries. It works out the
+chord progression, key and tempo of each sample, stores them in a database, and
+then answers the question a producer actually has: **which other samples will
+sound good with this one?**
+
+Two samples can be compatible even when they are in different keys, because a
+sample can be pitch-shifted, so matching is done on the *shape* of a progression
+as well as its exact chords. The tool has a command-line interface, a Streamlit
+web UI, and can also transcribe audio to MIDI.
 
 ## Screenshots
 
