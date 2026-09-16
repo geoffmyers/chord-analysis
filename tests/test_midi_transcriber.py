@@ -467,3 +467,21 @@ class TestTranscriptionAudioFormats:
         """Test that all formats start with a dot."""
         for fmt in TRANSCRIPTION_AUDIO_FORMATS:
             assert fmt.startswith(".")
+
+
+class TestDockerImagesAreBuiltLocally:
+    """The images are not published, so a missing one must be built, not pulled."""
+
+    def test_every_docker_backend_names_a_compose_service_that_builds_its_image(self):
+        import re
+        from chord_analyzer.midi_transcriber import DOCKER_IMAGES, DOCKER_SERVICES
+
+        compose = (Path(__file__).parent.parent / "docker" / "docker-compose.yml").read_text()
+        # service name -> the text of its block (two-space-indented keys under services:)
+        services = dict(re.findall(r"^  ([a-z0-9_-]+):\n((?:    .*\n|\n)*)", compose, re.M))
+        assert set(DOCKER_SERVICES) == set(DOCKER_IMAGES)
+        for backend, service in DOCKER_SERVICES.items():
+            assert service in services, f"no '{service}' service in docker-compose.yml"
+            block = services[service]
+            assert "build:" in block
+            assert f"image: {DOCKER_IMAGES[backend]}" in block

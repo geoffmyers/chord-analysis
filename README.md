@@ -110,8 +110,13 @@ To use the Docker transcription backends, build their images locally. They are
 not published to a registry.
 
 ```bash
-docker compose -f docker/docker-compose.yml build
+docker compose -f docker/docker-compose.yml build          # all three
+docker compose -f docker/docker-compose.yml build magenta  # or one: magenta, omnizart, mt3
 ```
+
+If a transcription needs an image you have not built, the error names the
+service to build. The MT3 build also tries to download its model checkpoints
+(about 1.5 GB) from Google Cloud Storage.
 
 ## Usage
 
@@ -419,8 +424,6 @@ pytest tests/ --cov=chord_analyzer --cov-report=term-missing
 ```
 
 ## License
-
-Copyright © 2026 Geoff Myers
 
 This program is free software: you can redistribute it and/or modify it under
 the terms of the GNU General Public License as published by the Free Software

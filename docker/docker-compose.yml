@@ -5,8 +5,8 @@
 #   docker-compose build magenta            # Build specific image
 #   docker-compose run --rm magenta /input/audio.wav /output/output.mid
 #
-# Note: This is primarily for local development and testing.
-# Production usage should pull images from GitHub Container Registry.
+# The images are not published to a registry: build them here. The ghcr.io
+# names below are local tags, and chord_analyzer looks for exactly these names.
 
 services:
   magenta:

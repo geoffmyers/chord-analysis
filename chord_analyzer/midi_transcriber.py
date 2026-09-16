@@ -121,11 +121,20 @@ except ImportError:
 # Docker Backend Support (constants only - functions defined after dataclasses)
 # ============================================================================
 
-# Docker image names for backends that require isolated environments
+# Docker images for the backends that need an isolated environment. These are
+# local tags: the images are built from docker/docker-compose.yml and are not
+# published to any registry, so the ghcr.io prefix is only part of the name.
 DOCKER_IMAGES = {
     TranscriptionBackend.ONSETS_FRAMES: "ghcr.io/geoffmyers/chord-analyzer-magenta:latest",
     TranscriptionBackend.OMNIZART: "ghcr.io/geoffmyers/chord-analyzer-omnizart:latest",
     TranscriptionBackend.MT3: "ghcr.io/geoffmyers/chord-analyzer-mt3:latest",
+}
+
+# The docker-compose.yml service that builds each image.
+DOCKER_SERVICES = {
+    TranscriptionBackend.ONSETS_FRAMES: "magenta",
+    TranscriptionBackend.OMNIZART: "omnizart",
+    TranscriptionBackend.MT3: "mt3",
 }
 
 # Backends that can run via Docker
@@ -498,7 +507,10 @@ def transcribe_docker(
             output_path=output_path or "",
             backend=backend,
             success=False,
-            error_message=f"Docker image not found: {image}. Run: docker pull {image}",
+            error_message=(
+                f"Docker image not found: {image}. Build it from the project root: "
+                f"docker compose -f docker/docker-compose.yml build {DOCKER_SERVICES[backend]}"
+            ),
         )
 
     # Generate output path if not provided
