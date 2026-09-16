@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="docs/icon.svg" width="96" height="96" alt="Chord Analysis icon">
+</p>
+
 # Chord Analysis & Sample Compatibility Matcher
 
 <!-- BADGES:START -->
@@ -411,6 +415,8 @@ for where the project is going.
   [MT3](https://github.com/magenta/mt3), and
   [Omnizart](https://github.com/Music-and-Culture-Technology-Lab/omnizart).
   Each is installed separately and keeps its own licence.
+- The README icon is the [Font Awesome](https://fontawesome.com/) `guitar` glyph,
+  used under [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/).
 
 Written by Geoff Myers.
 
