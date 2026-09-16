@@ -300,7 +300,7 @@ class TestCombineKeyDetections:
         assert result.source == "chords"
 
     def test_all_agree(self):
-        # All sources agree on C major
+        # A filename key always wins outright, whatever the analysis says
         audio_result = KeyDetectionResult(
             key="C major", root="C", quality=KeyQuality.MAJOR, confidence=0.8
         )
@@ -314,8 +314,22 @@ class TestCombineKeyDetections:
         )
         assert result is not None
         assert result.key_result.key == "C major"
-        assert result.source == "combined"
-        assert result.overall_confidence > 0.9  # Boosted by agreement
+        assert result.source == "filename"
+        assert result.overall_confidence == 1.0
+
+    def test_analysis_agreement_boosts_confidence(self):
+        # Without a filename key, audio and chords vote, and agreement counts
+        audio_result = KeyDetectionResult(
+            key="C major", root="C", quality=KeyQuality.MAJOR, confidence=0.8
+        )
+        chord_result = KeyDetectionResult(
+            key="C major", root="C", quality=KeyQuality.MAJOR, confidence=0.7
+        )
+        agreed = combine_key_detections(None, audio_result, chord_result)
+        audio_alone = combine_key_detections(None, audio_result, None)
+        assert agreed.key_result.key == "C major"
+        assert agreed.source == "combined"
+        assert agreed.overall_confidence > audio_alone.overall_confidence
 
     def test_filename_overrides_audio(self):
         # Filename takes priority even if audio disagrees
@@ -327,7 +341,7 @@ class TestCombineKeyDetections:
             audio_result=audio_result,
             chord_result=None,
         )
-        # Filename has 0.6 weight vs audio 0.3, so C major wins
+        # A filename key takes absolute priority
         assert result.key_result.key == "C major"
 
     def test_no_detections(self):
@@ -346,11 +360,10 @@ class TestCombineKeyDetections:
             key="C major", root="C", quality=KeyQuality.MAJOR, confidence=0.7
         )
         result = combine_key_detections(
-            filename_key=("C major", "C", "major"),
+            filename_key=None,
             audio_result=audio_result,
             chord_result=chord_result,
         )
-        assert "filename" in result.key_result.method
         assert "audio" in result.key_result.method
         assert "chords" in result.key_result.method
 

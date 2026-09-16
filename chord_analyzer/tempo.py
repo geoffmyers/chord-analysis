@@ -241,20 +241,26 @@ def estimate_tempo_from_chord_timing(
     most_common_interval = max(interval_counts, key=interval_counts.get)
 
     # Try to match to common tempos
-    # Assume chord changes happen on beats (quarters, halves, or whole notes)
+    # Assume chord changes happen on beats: a chord per beat is the likeliest
+    # reading, then per half and whole bar, and per eighth note last. An
+    # interval fits several tempos equally (0.5 s is a beat at 120 BPM and an
+    # eighth at 60), so ties go to the likelier reading, not to whichever tempo
+    # comes first in the list, which used to report 60 for 120.
     best_tempo = None
     best_score = float("inf")
+    best_rank = float("inf")
 
     for tempo in common_tempos:
         beat_duration = 60.0 / tempo
 
         # Check how well the interval fits various beat multiples
-        for multiplier in [0.5, 1, 2, 4]:
+        for rank, multiplier in enumerate([1, 2, 4, 0.5]):
             expected_interval = beat_duration * multiplier
-            error = abs(most_common_interval - expected_interval)
+            error = round(abs(most_common_interval - expected_interval), 6)
 
-            if error < best_score:
+            if (error, rank) < (best_score, best_rank):
                 best_score = error
+                best_rank = rank
                 best_tempo = tempo
 
     # Only return if we have a reasonable match (within 10% of beat duration)

@@ -237,8 +237,10 @@ def detect_key_from_chroma(
     for semitone in range(12):
         root = SEMITONE_TO_NOTE[semitone]
 
-        # Rotate chroma to put this root at position 0
-        rotated_chroma = chroma[-semitone:] + chroma[:-semitone] if semitone > 0 else chroma
+        # Rotate chroma to put this root at position 0. (It rotated the other
+        # way until 2026-09-16, so every key but C and F# was misread: A minor
+        # came back as D# minor.)
+        rotated_chroma = chroma[semitone:] + chroma[:semitone]
 
         # Correlate with major and minor profiles
         major_corr = _correlate(rotated_chroma, major_profile)
@@ -263,7 +265,7 @@ def detect_key_from_chroma(
 
     # Get major/minor correlations for the detected root
     root_semitone = NOTE_TO_SEMITONE[best_root]
-    rotated = chroma[-root_semitone:] + chroma[:-root_semitone] if root_semitone > 0 else chroma
+    rotated = chroma[root_semitone:] + chroma[:root_semitone]
 
     return KeyDetectionResult(
         key=best_key,
@@ -409,10 +411,7 @@ def detect_scale_mode(
     root_semitone = NOTE_TO_SEMITONE[key_root]
 
     # Rotate chroma to put root at position 0
-    if root_semitone > 0:
-        rotated_chroma = chroma[-root_semitone:] + chroma[:-root_semitone]
-    else:
-        rotated_chroma = chroma
+    rotated_chroma = chroma[root_semitone:] + chroma[:root_semitone]
 
     # Test each scale template
     scores = []

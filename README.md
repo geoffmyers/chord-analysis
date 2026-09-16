@@ -58,8 +58,8 @@ The Streamlit web UI has no screenshot yet.
 
 - **Chord extraction** from audio with Sonic Annotator and the Chordino plugin
 - **Key and tempo from filenames**, such as `Funky_Bass_Cmaj_120bpm.wav`
-- **Key detection by weighted vote** across the filename, the audio
-  (Krumhansl-Kessler profiles over a chromagram) and the chords, with a
+- **Key detection** from the filename, or else by a weighted vote between the
+  audio (Krumhansl-Kessler profiles over a chromagram) and the chords, with a
   confidence score
 - **Mode detection** beyond major and minor: Dorian, Phrygian, Lydian,
   Mixolydian, Locrian, and harmonic and melodic minor
@@ -179,9 +179,10 @@ Tempo is taken from, in order: `--bpm`, the filename (`120bpm`, `120BPM`,
 `120 bpm`), librosa's analysis of the audio, and finally an estimate from the
 chord timing.
 
-Keys are taken from a weighted vote: the filename counts for 60%, the audio for
-30% and the chords for 10%, and agreement raises the confidence. Filenames can
-carry keys such as `Cmaj`, `Am`, `F#m`, `Db Major` or `G minor`.
+A key in the filename always wins, because it is someone's explicit label.
+Filenames can carry keys such as `Cmaj`, `Am`, `F#m`, `Db Major` or `G minor`.
+Without one, the audio (weight 0.3) and the chords (weight 0.1) vote, and
+agreement between them raises the confidence.
 
 ### 4. Find compatible samples
 

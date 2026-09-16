@@ -217,16 +217,15 @@ def _score_note_overlap(
     overlap_ratio = len(intersection) / len(union)
     overlap_score = overlap_ratio * 15  # Max 15 points
 
-    # Detect semitone clashes (notes that are 1 semitone apart)
+    # Detect semitone clashes: each note of A against each note of B a
+    # semitone away. Only A is walked, so each pair is counted once. (Halving
+    # the count, as this did until 2026-09-16, turned a single clash into none.)
     clash_count = 0
     for note in notes_a:
         if (note + 1) % 12 in notes_b:
             clash_count += 1
         if (note - 1) % 12 in notes_b:
             clash_count += 1
-
-    # Divide by 2 to avoid double-counting
-    clash_count = clash_count // 2
     clash_penalty = -min(clash_count * 5, 15)  # Max -15 points
 
     reasons = []
