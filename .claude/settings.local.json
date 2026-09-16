@@ -1,0 +1,16 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(chmod:*)",
+      "Bash(bash -n:*)",
+      "Bash(python3 -m py_compile:*)",
+      "Bash(source venv/bin/activate)",
+      "Bash(python -c:*)",
+      "Bash(sqlite3:*)",
+      "Bash(pkill:*)",
+      "Bash(pgrep:*)",
+      "Bash(python -m chord_analyzer analyze:*)",
+      "Bash(python rebuild_database.py:*)"
+    ]
+  }
+}

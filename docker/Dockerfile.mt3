@@ -1,0 +1,68 @@
+# Dockerfile for Google MT3 (Music Transcription with Transformers) backend
+# Based on the official MT3 Colab setup
+FROM python:3.10-slim
+
+LABEL org.opencontainers.image.source="https://github.com/geoffmyers/chord-analysis"
+LABEL org.opencontainers.image.description="MT3 transformer-based audio-to-MIDI transcription"
+LABEL org.opencontainers.image.licenses="Apache-2.0"
+
+# Install system dependencies
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    libsndfile1 \
+    ffmpeg \
+    git \
+    fluidsynth \
+    libfluidsynth3 \
+    && rm -rf /var/lib/apt/lists/*
+
+# Create non-root user
+RUN useradd -m -u 1000 transcriber
+WORKDIR /app
+
+# Install JAX (CPU version - use jax[cuda] for GPU)
+RUN pip install --no-cache-dir \
+    jax==0.4.17 \
+    jaxlib==0.4.17
+
+# Install T5X and dependencies
+# Note: seqio 0.0.18 requires protobuf<=3.20.3 but note-seq 0.0.5
+# requires protobuf>=4.21.2. Install seqio without deps to bypass
+# the protobuf upper bound (works fine at runtime with protobuf 4.x).
+RUN pip install --no-cache-dir \
+    numpy==1.23.5 \
+    t5==0.9.4 \
+    flax==0.7.0 \
+    note-seq==0.0.5 \
+    pretty_midi==0.2.10 \
+    librosa==0.9.2
+RUN pip install --no-cache-dir --no-deps \
+    seqio==0.0.18 \
+    t5x==0.0.0
+
+# Clone MT3 repository
+RUN git clone --depth 1 https://github.com/magenta/mt3.git /app/mt3
+
+# Install MT3
+WORKDIR /app/mt3
+RUN pip install --no-cache-dir -e .
+
+# Download MT3 checkpoints (optional, ~1.5GB)
+# Uses timeout to prevent hanging in CI where GCS auth is unavailable
+RUN mkdir -p /app/checkpoints && \
+    timeout 120 gsutil -q -m cp -r gs://mt3/checkpoints/mt3 /app/checkpoints/ || \
+    echo "Checkpoint download skipped; will be downloaded on first run"
+
+WORKDIR /app
+
+# Create directories for audio I/O (before switching to non-root user)
+RUN mkdir -p /app/input /app/output && chown -R transcriber:transcriber /app
+
+# Copy transcription worker script
+COPY --chown=transcriber:transcriber workers/mt3_worker.py /app/
+
+# Switch to non-root user
+USER transcriber
+
+ENV MT3_CHECKPOINT_PATH=/app/checkpoints/mt3
+
+ENTRYPOINT ["python", "/app/mt3_worker.py"]

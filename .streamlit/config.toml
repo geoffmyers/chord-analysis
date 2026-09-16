@@ -1,0 +1,17 @@
+[server]
+# Suppress WebSocket warnings
+enableWebsocketCompression = true
+maxUploadSize = 200
+
+[client]
+# Show less verbose errors
+showErrorDetails = true
+
+[logger]
+# Reduce log verbosity to suppress benign WebSocket warnings
+level = "error"
+messageFormat = "%(asctime)s %(message)s"
+
+[browser]
+# Browser settings
+gatherUsageStats = false

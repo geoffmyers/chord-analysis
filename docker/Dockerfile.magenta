@@ -1,0 +1,39 @@
+# Dockerfile for Google Magenta Onsets and Frames transcription backend
+# Uses Python 3.8 for maximum magenta compatibility
+# Uses linux/amd64 platform since tensorflow 2.9.1 has no ARM wheels
+FROM --platform=linux/amd64 python:3.8-slim
+
+LABEL org.opencontainers.image.source="https://github.com/geoffmyers/chord-analysis"
+LABEL org.opencontainers.image.description="Magenta Onsets and Frames audio-to-MIDI transcription"
+LABEL org.opencontainers.image.licenses="Apache-2.0"
+
+# Install system dependencies (including build tools for python-rtmidi)
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    libsndfile1 \
+    ffmpeg \
+    g++ \
+    libasound2-dev \
+    libjack-dev \
+    && rm -rf /var/lib/apt/lists/*
+
+# Create non-root user
+RUN useradd -m -u 1000 transcriber
+WORKDIR /app
+
+# Install Python dependencies
+# Use older pip that works better with magenta's pinned versions
+RUN pip install --upgrade pip==23.0.1
+
+# Install magenta and all its dependencies
+RUN pip install --no-cache-dir magenta==2.1.4
+
+# Create directories for audio I/O (before switching to non-root user)
+RUN mkdir -p /app/input /app/output && chown -R transcriber:transcriber /app
+
+# Copy transcription worker script
+COPY --chown=transcriber:transcriber workers/magenta_worker.py /app/
+
+# Switch to non-root user
+USER transcriber
+
+ENTRYPOINT ["python", "/app/magenta_worker.py"]

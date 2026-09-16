@@ -1,0 +1,64 @@
+# Chord Analysis & Sample Compatibility Matcher
+# Python 3.9+
+
+# CLI
+rich>=13.0.0
+
+# Audio processing (optional, for format conversion)
+pydub>=0.25.0
+soundfile>=0.12.0  # For native audio file I/O
+
+# Tempo/beat detection and pitch extraction (required)
+# librosa requires additional system dependencies:
+# - macOS: brew install libsndfile
+# - Linux: apt-get install libsndfile1
+librosa>=0.10.0
+numpy>=1.20.0
+
+# Optional: Enhanced polyphonic pitch detection
+# Essentia provides more accurate polyphonic detection but is harder to install
+# Falls back to librosa if not available
+# essentia>=2.1b6.dev1116  # Uncomment to enable Essentia support
+# Note: Essentia installation may require building from source on some systems
+
+# Optional: Audio-to-MIDI transcription backends
+# Install one or more to enable the `transcribe` command
+# By default, all installed backends will be used
+
+# Basic Pitch: Spotify's lightweight, instrument-agnostic transcriber
+# Supports polyphonic transcription with pitch bend detection
+# pip install basic-pitch
+# basic-pitch>=0.3.0
+
+# Piano Transcription: ByteDance's high-accuracy piano transcriber
+# Trained on MAESTRO dataset, excellent for piano recordings
+# pip install piano_transcription_inference
+# piano_transcription_inference>=0.0.5
+
+# Magenta Onsets and Frames: Google's piano-optimized transcriber
+# More resource-intensive but highly accurate for piano
+# pip install magenta
+# magenta>=2.1.0
+
+# Omnizart: Multi-instrument transcription (music, drums, vocals, chords)
+# After install, run: omnizart download-checkpoints
+# pip install omnizart
+# omnizart>=0.5.0
+
+# MT3: Google's transformer-based multi-instrument transcriber
+# Requires manual installation from source
+# See: https://github.com/magenta/mt3
+# Note: MT3 is typically used via Google Colab
+
+# pretty_midi: Required for reading MIDI files from some backends
+pretty_midi>=0.2.10
+
+# Web UI
+streamlit>=1.28.0
+pandas>=2.0.0  # For Streamlit charts
+matplotlib>=3.7.0  # For waveform visualization
+Pillow>=10.0.0  # Required by matplotlib for image rendering
+
+# Testing
+pytest>=7.0.0
+pytest-cov>=4.0.0

@@ -1,0 +1,47 @@
+# Dockerfile for Omnizart multi-instrument transcription backend
+# Uses Python 3.8 for omnizart 0.5.0 compatibility (requires >=3.6.1,<3.9)
+FROM --platform=linux/amd64 python:3.8-slim
+
+LABEL org.opencontainers.image.source="https://github.com/geoffmyers/chord-analysis"
+LABEL org.opencontainers.image.description="Omnizart multi-instrument audio-to-MIDI transcription"
+LABEL org.opencontainers.image.licenses="MIT"
+
+# Install system dependencies including build tools for Cython/madmom
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    libsndfile1 \
+    ffmpeg \
+    build-essential \
+    && rm -rf /var/lib/apt/lists/*
+
+# Create non-root user
+RUN useradd -m -u 1000 transcriber
+WORKDIR /app
+
+# Install Cython first (required by madmom)
+RUN pip install --no-cache-dir Cython==0.29.36
+
+# Install numpy first (required for madmom build)
+RUN pip install --no-cache-dir numpy==1.21.6
+
+# Install Omnizart and dependencies
+# Pin versions for reproducibility
+RUN pip install --no-cache-dir \
+    scipy==1.7.3 \
+    librosa==0.8.1 \
+    tensorflow==2.9.1 \
+    omnizart==0.5.0 \
+    pretty_midi==0.2.10
+
+# Download Omnizart checkpoints (this increases image size but improves startup time)
+RUN omnizart download-checkpoints
+
+# Create directories for audio I/O (before switching to non-root user)
+RUN mkdir -p /app/input /app/output && chown -R transcriber:transcriber /app
+
+# Copy transcription worker script
+COPY --chown=transcriber:transcriber workers/omnizart_worker.py /app/
+
+# Switch to non-root user
+USER transcriber
+
+ENTRYPOINT ["python", "/app/omnizart_worker.py"]

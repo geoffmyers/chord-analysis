@@ -1,0 +1,48 @@
+# Docker Compose for audio-to-MIDI transcription backends
+#
+# Usage:
+#   docker-compose build                    # Build all images
+#   docker-compose build magenta            # Build specific image
+#   docker-compose run --rm magenta /input/audio.wav /output/output.mid
+#
+# Note: This is primarily for local development and testing.
+# Production usage should pull images from GitHub Container Registry.
+
+services:
+  magenta:
+    build:
+      context: .
+      dockerfile: Dockerfile.magenta
+    image: ghcr.io/geoffmyers/chord-analyzer-magenta:latest
+    volumes:
+      - ./input:/app/input:ro
+      - ./output:/app/output
+    # Default command shows help; override with actual paths
+    command: ["--help"]
+
+  omnizart:
+    build:
+      context: .
+      dockerfile: Dockerfile.omnizart
+    image: ghcr.io/geoffmyers/chord-analyzer-omnizart:latest
+    volumes:
+      - ./input:/app/input:ro
+      - ./output:/app/output
+    command: ["--help"]
+
+  mt3:
+    build:
+      context: .
+      dockerfile: Dockerfile.mt3
+    image: ghcr.io/geoffmyers/chord-analyzer-mt3:latest
+    volumes:
+      - ./input:/app/input:ro
+      - ./output:/app/output
+    # MT3 requires checkpoints to be downloaded first
+    # See Dockerfile.mt3 for checkpoint download instructions
+    command: ["--help"]
+
+# Shared volume for audio I/O between host and containers
+volumes:
+  audio-input:
+  audio-output:
