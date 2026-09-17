@@ -4,8 +4,9 @@ enableWebsocketCompression = true
 maxUploadSize = 200
 
 [client]
-# Show less verbose errors
-showErrorDetails = true
+# Don't leak stack traces / file paths to the browser. Set to true locally
+# for debugging (e.g. `--client.showErrorDetails=true`, or edit this file).
+showErrorDetails = false
 
 [logger]
 # Reduce log verbosity to suppress benign WebSocket warnings

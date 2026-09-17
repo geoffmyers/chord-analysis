@@ -235,13 +235,13 @@ streamlit run chord_analyzer/web_app.py
 
 **Using Launchers (Recommended):**
 ```bash
-cd python-scripts/chord-analysis
+cd chord-analysis
 ./launch-web-ui.sh  # That's it!
 ```
 
 **Manual Setup:**
 ```bash
-cd python-scripts/chord-analysis
+cd chord-analysis
 python3 -m venv venv
 source venv/bin/activate
 pip install -r requirements.txt
@@ -296,7 +296,7 @@ python3 launch_web_ui.py
 
 Make sure you're in the right directory:
 ```bash
-cd python-scripts/chord-analysis
+cd chord-analysis
 pwd  # Should show chord-analysis directory
 ls -la launch*  # Should show executable files
 ```

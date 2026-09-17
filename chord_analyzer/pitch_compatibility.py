@@ -459,9 +459,12 @@ def score_beat(
         elif pitch_class in scale_tones:
             in_scale_weight += weight
 
-        # Check for semitone clashes with chord tones
+        # Check for semitone clashes with chord tones. `abs(a - b) % 12 == 1`
+        # misses the B/C wrap (pitch classes 11 and 0: abs(11-0)=11, not 1);
+        # checking both neighbours mod 12 catches it. (compatibility.py's
+        # _score_note_overlap fixed this same bug on 2026-09-16.)
         for chord_tone in chord_tones:
-            if abs(pitch_class - chord_tone) % 12 == 1:
+            if (pitch_class + 1) % 12 == chord_tone or (pitch_class - 1) % 12 == chord_tone:
                 clash_count += 1
                 break  # Only count one clash per note
 

@@ -23,3 +23,8 @@ set of Docker transcription backends.
   using librosa-based detection.
 - `rebuild_database.py` takes `--audio-dir` (or `$SPLICE_AUDIO_DIR`); the
   library location is an argument, never a literal.
+- The Streamlit UI paginates the sample browser (`database.get_samples_page`)
+  rather than loading every row, and never embeds audio as base64 in the
+  page. An earlier build did both, which pushed browser memory into the
+  gigabytes on a large library — keep new UI code on the paginated,
+  file-served path.

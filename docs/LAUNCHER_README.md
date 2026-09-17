@@ -131,7 +131,7 @@ If you've never used the project before:
 
 ```bash
 # 1. Navigate to the project
-cd python-scripts/chord-analysis
+cd chord-analysis
 
 # 2. Launch (will set up everything automatically)
 ./launch-web-ui.sh

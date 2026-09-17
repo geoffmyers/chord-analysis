@@ -173,11 +173,6 @@ class KeyAnalysisResult:
         return str(self.key_result)
 
 
-def _rotate_profile(profile: List[float], semitones: int) -> List[float]:
-    """Rotate a key profile by a number of semitones."""
-    return profile[-semitones:] + profile[:-semitones]
-
-
 def _correlate(chroma: List[float], profile: List[float]) -> float:
     """Calculate Pearson correlation between chroma and key profile."""
     if not LIBROSA_AVAILABLE:

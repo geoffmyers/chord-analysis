@@ -394,11 +394,6 @@ python -m chord_analyzer analyze --csv-dir ./chord_data --db samples.db
 
 ## Gotchas
 
-- This project is published to GitHub (`geoffmyers/chord-analysis`) as a snapshot.
-  Each publish appends one commit to the public history. Publish with:
-  `scripts/publish-subtree-snapshot.sh --prefix=music/chord-analysis --publish`
-  Exclusions and GitHub metadata are declared in `scripts/subtree-publish.json`.
-- **NEVER run `git subtree push` or `git subtree split`.** A raw split has twice
-  pushed the entire mono-repo history — and the secrets in it — to a public remote
-  (see `docs/security/2026-02-04-` and `2026-05-12-credential-leak-audit.md`). A
-  pre-push hook refuses it.
+- This project is developed in a private repository and published to
+  GitHub (`geoffmyers/chord-analysis`) as a snapshot: each publish adds one commit.
+  Pull requests are applied upstream first; see CONTRIBUTING.md.

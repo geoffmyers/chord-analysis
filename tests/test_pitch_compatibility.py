@@ -126,6 +126,21 @@ class TestScoreBeat:
         assert in_scale == 0.0  # C# not in C major scale
         assert clashes > 0  # C# clashes with C (semitone)
 
+    def test_chromatic_note_clash_wraps_at_octave_boundary(self):
+        """B (11) is a semitone below C (0): the clash must be detected even
+        though pitch classes wrap around at the octave boundary rather than
+        being adjacent on a simple number line (11 and 0 differ by 11, not 1,
+        under a naive `abs(pc - tone) % 12` check)."""
+        notes = [
+            create_test_note(0.0, 0.5, pitch_class=11),  # B
+        ]
+        chord = UserChordSpec(root="C", quality="maj", duration_beats=4)
+
+        score, in_chord, in_scale, clashes = score_beat(notes, chord)
+
+        assert in_chord == 0.0
+        assert clashes > 0  # B clashes with C (semitone, wrapping B->C)
+
     def test_empty_beat_score(self):
         """Test scoring for empty beat returns neutral score."""
         chord = UserChordSpec(root="C", quality="maj", duration_beats=4)

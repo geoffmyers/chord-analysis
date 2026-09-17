@@ -13,6 +13,8 @@ from chord_analyzer.database import (
     get_all_samples,
     get_database_stats,
     clear_compatibility_cache,
+    get_sample_count,
+    get_samples_page,
 )
 from chord_analyzer.models import ChordEvent, Sample
 
@@ -224,3 +226,84 @@ class TestCompatibilityCache:
         # Verify cache is empty
         cursor = conn.execute("SELECT COUNT(*) FROM compatibility_cache")
         assert cursor.fetchone()[0] == 0
+
+
+class TestPaginationFiltering:
+    """Tests for get_sample_count() / get_samples_page() and the
+    column-allowlist validation on their `order_by` / `where_clause`
+    arguments (they cannot be parameterized like values can)."""
+
+    def _seed(self, conn):
+        conn.execute(
+            """
+            INSERT INTO samples (filepath, filename, duration_seconds, estimated_key)
+            VALUES (?, ?, ?, ?), (?, ?, ?, ?), (?, ?, ?, ?)
+            """,
+            (
+                "/a.wav", "a", 1.0, "C",
+                "/b.wav", "b", 2.0, "G",
+                "/c.wav", "c", 3.0, "C",
+            ),
+        )
+        conn.commit()
+
+    def test_count_no_filter(self, temp_db):
+        conn, _ = temp_db
+        self._seed(conn)
+        assert get_sample_count(conn) == 3
+
+    def test_count_with_valid_where_clause(self, temp_db):
+        conn, _ = temp_db
+        self._seed(conn)
+        assert get_sample_count(conn, "estimated_key = ?", ("C",)) == 2
+
+    def test_page_ordering_and_limit(self, temp_db):
+        conn, _ = temp_db
+        self._seed(conn)
+        page = get_samples_page(conn, limit=2, offset=0, order_by="filename DESC")
+        assert [s.filename for s in page] == ["c", "b"]
+
+    def test_page_with_where_clause(self, temp_db):
+        conn, _ = temp_db
+        self._seed(conn)
+        page = get_samples_page(
+            conn, where_clause="estimated_key = ?", params=("C",)
+        )
+        assert sorted(s.filename for s in page) == ["a", "c"]
+
+    def test_where_clause_rejects_unknown_column(self, temp_db):
+        conn, _ = temp_db
+        self._seed(conn)
+        with pytest.raises(ValueError):
+            get_sample_count(conn, "1=1 OR sqlite_master.name = ?", ("x",))
+
+    def test_where_clause_rejects_statement_terminator(self, temp_db):
+        conn, _ = temp_db
+        self._seed(conn)
+        with pytest.raises(ValueError):
+            get_sample_count(conn, "id = 1; DROP TABLE samples;--", ())
+
+    def test_where_clause_rejects_comment(self, temp_db):
+        conn, _ = temp_db
+        self._seed(conn)
+        with pytest.raises(ValueError):
+            get_samples_page(conn, where_clause="id = 1 -- comment", params=())
+
+    def test_order_by_rejects_unknown_column(self, temp_db):
+        conn, _ = temp_db
+        self._seed(conn)
+        with pytest.raises(ValueError):
+            get_samples_page(conn, order_by="id; DROP TABLE samples;--")
+
+    def test_order_by_rejects_bad_direction(self, temp_db):
+        conn, _ = temp_db
+        self._seed(conn)
+        with pytest.raises(ValueError):
+            get_samples_page(conn, order_by="filename SIDEWAYS")
+
+    def test_order_by_accepts_asc_desc(self, temp_db):
+        conn, _ = temp_db
+        self._seed(conn)
+        asc = get_samples_page(conn, order_by="filename ASC")
+        desc = get_samples_page(conn, order_by="filename DESC")
+        assert [s.filename for s in asc] == list(reversed([s.filename for s in desc]))

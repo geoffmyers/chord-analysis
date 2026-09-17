@@ -5,7 +5,7 @@
 The fastest way to get started:
 
 ```bash
-cd python-scripts/chord-analysis
+cd chord-analysis
 ./launch-web-ui.sh
 ```
 

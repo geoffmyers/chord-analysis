@@ -3,12 +3,121 @@ Database operations for storing and querying sample data.
 """
 
 import json
+import re
 import sqlite3
 from pathlib import Path
 from typing import List, Optional, Dict, Any
 
 from .models import ChordEvent, Sample, CompatibilityResult, PitchAnalysisResult, NoteEvent
 from .compatibility import calculate_compatibility, calculate_compatibility_with_rhythm
+
+# Columns of the `samples` table. `get_sample_count()` and `get_samples_page()`
+# accept a caller-supplied `order_by` and `where_clause`; SQLite can only
+# parameterize *values* (via `?`), never column names, so those two are
+# validated against this allowlist instead of being interpolated as-is.
+_SAMPLE_COLUMNS = frozenset(
+    {
+        "id",
+        "filepath",
+        "filename",
+        "directory",
+        "chords_json",
+        "progression_json",
+        "root_notes_json",
+        "chord_types_json",
+        "duration_seconds",
+        "estimated_key",
+        "estimated_bpm",
+        "time_signature",
+        "first_beat_offset",
+        "voicing_type",
+        "created_at",
+        "analyzed_at",
+    }
+)
+
+# Keywords `where_clause` is allowed to contain alongside column names.
+_WHERE_KEYWORDS = frozenset(
+    {
+        "and",
+        "or",
+        "not",
+        "null",
+        "is",
+        "like",
+        "in",
+        "between",
+        "glob",
+        "escape",
+        "true",
+        "false",
+    }
+)
+
+_IDENTIFIER_RE = re.compile(r"[A-Za-z_][A-Za-z0-9_]*")
+
+
+def _validate_order_by(order_by: str) -> str:
+    """
+    Validate an `order_by` string against the `samples` table schema.
+
+    `order_by` cannot be passed as a `?` parameter (SQLite only parameterizes
+    values), so it is checked against a column allowlist instead of being
+    interpolated as-is. Accepts a bare column name or `<column> ASC|DESC`.
+
+    Raises:
+        ValueError: if the column is unknown or the direction is invalid.
+    """
+    parts = order_by.strip().split()
+    if not parts or len(parts) > 2:
+        raise ValueError(f"Invalid order_by: {order_by!r}")
+
+    column = parts[0]
+    if column not in _SAMPLE_COLUMNS:
+        raise ValueError(f"Unknown column in order_by: {column!r}")
+
+    if len(parts) == 2:
+        direction = parts[1].upper()
+        if direction not in ("ASC", "DESC"):
+            raise ValueError(f"Invalid order_by direction: {parts[1]!r}")
+        return f"{column} {direction}"
+
+    return column
+
+
+def _validate_where_clause(where_clause: str) -> str:
+    """
+    Validate a caller-supplied `where_clause` fragment before it is
+    interpolated into a query.
+
+    `where_clause` exists so callers can express arbitrary boolean
+    conditions, which SQLite cannot parameterize (`?` only substitutes
+    values, never column names, operators or keywords). Every bare
+    identifier in the clause is checked against the `samples` column
+    allowlist (or a small keyword allowlist), and statement-breaking
+    sequences are rejected outright. Values still belong in `params` as `?`
+    placeholders, not as literals embedded in the clause.
+
+    Raises:
+        ValueError: if the clause contains an unknown identifier or a
+            disallowed sequence (`;`, `--`, `/*`, `*/`).
+    """
+    if not where_clause:
+        return where_clause
+
+    for forbidden in (";", "--", "/*", "*/"):
+        if forbidden in where_clause:
+            raise ValueError(f"Disallowed sequence in where_clause: {forbidden!r}")
+
+    for match in _IDENTIFIER_RE.finditer(where_clause):
+        token = match.group(0)
+        if token.lower() in _WHERE_KEYWORDS:
+            continue
+        if token in _SAMPLE_COLUMNS:
+            continue
+        raise ValueError(f"Unknown identifier in where_clause: {token!r}")
+
+    return where_clause
 
 
 def init_database(db_path: str) -> sqlite3.Connection:
@@ -222,7 +331,9 @@ def get_sample_count(conn: sqlite3.Connection, where_clause: str = "", params: t
 
     Args:
         conn: Database connection
-        where_clause: Optional SQL WHERE clause (without the WHERE keyword)
+        where_clause: Optional SQL WHERE clause (without the WHERE keyword).
+            Every bare identifier must be a `samples` column; raises
+            ValueError otherwise (see `_validate_where_clause`).
         params: Parameters for the WHERE clause
 
     Returns:
@@ -230,7 +341,7 @@ def get_sample_count(conn: sqlite3.Connection, where_clause: str = "", params: t
     """
     query = "SELECT COUNT(*) FROM samples"
     if where_clause:
-        query += f" WHERE {where_clause}"
+        query += f" WHERE {_validate_where_clause(where_clause)}"
     cursor = conn.execute(query, params)
     return cursor.fetchone()[0]
 
@@ -250,17 +361,21 @@ def get_samples_page(
         conn: Database connection
         limit: Maximum number of samples to return
         offset: Number of samples to skip
-        order_by: Column to order by (default: filename)
-        where_clause: Optional SQL WHERE clause (without the WHERE keyword)
+        order_by: Column to order by, optionally followed by ASC/DESC
+            (default: filename). Must be a `samples` column; raises
+            ValueError otherwise (see `_validate_order_by`).
+        where_clause: Optional SQL WHERE clause (without the WHERE keyword).
+            Every bare identifier must be a `samples` column; raises
+            ValueError otherwise (see `_validate_where_clause`).
         params: Parameters for the WHERE clause
 
     Returns:
         List of Sample objects for the requested page
     """
-    query = f"SELECT * FROM samples"
+    query = "SELECT * FROM samples"
     if where_clause:
-        query += f" WHERE {where_clause}"
-    query += f" ORDER BY {order_by} LIMIT ? OFFSET ?"
+        query += f" WHERE {_validate_where_clause(where_clause)}"
+    query += f" ORDER BY {_validate_order_by(order_by)} LIMIT ? OFFSET ?"
 
     cursor = conn.execute(query, params + (limit, offset))
     return [_row_to_sample(row) for row in cursor]

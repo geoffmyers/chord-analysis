@@ -276,7 +276,18 @@ python launch_web_ui.py          # any platform
 
 Both launchers create the virtual environment, install the dependencies, find
 your database and open the UI at [http://localhost:8501](http://localhost:8501).
-They accept `--db PATH`, `--port PORT`, `--host HOST` and `--no-browser`.
+They accept `--db PATH`, `--port PORT`, `--host HOST` and `--no-browser`. See
+[docs/QUICKSTART.md](docs/QUICKSTART.md) for a walkthrough and
+[docs/LAUNCHER_README.md](docs/LAUNCHER_README.md) for the full launcher
+reference (troubleshooting, `docs/LAUNCHER_COMPARISON.md` for choosing
+between the two launchers and a manual `streamlit run`).
+
+The web UI ships with `.streamlit/config.toml`'s `showErrorDetails = false`,
+so a crash shows a generic message rather than a stack trace and file paths.
+To see the real traceback while debugging, run with
+`streamlit run chord_analyzer/web_app.py --client.showErrorDetails=true`, or
+flip the value in `.streamlit/config.toml` back to `true` locally (do not
+commit it that way).
 
 To run Streamlit yourself:
 

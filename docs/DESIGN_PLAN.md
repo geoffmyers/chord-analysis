@@ -755,7 +755,7 @@ chord-analysis/
 
 ```bash
 # 1. Clone and setup
-cd python-scripts/chord-analysis
+cd chord-analysis
 python -m venv venv
 source venv/bin/activate
 pip install -r requirements.txt
